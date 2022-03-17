@@ -1,0 +1,83 @@
+plugins {
+    id "com.github.ben-manes.versions" version "0.13.0"
+    id "com.github.hierynomus.license" version "0.11.0"
+}
+
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'groovy'
+
+version = '1.6-SNAPSHOT'
+
+def fileEncoding = 'UTF-8'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+def googleGuavaVersion = '20.0'
+def rxJavaVersion = '1.2.3'
+def rxSwingVersion = '0.27.0'
+def jcipVersion = '1.0'
+def jsr305Version = '3.0.1'
+def commonsLang3Version = '3.5'
+
+def groovyVersion = '2.4.7'
+def spockVersion = '1.0-groovy-2.4'
+def cglibVersion = '3.2.4'
+def awaitilityVersion = '1.7.0'
+def swingXVersion = '1.6.5-1'
+
+dependencies {
+    implementation "com.google.guava:guava:${googleGuavaVersion}"
+    implementation "io.reactivex:rxjava:${rxJavaVersion}"
+    implementation "io.reactivex:rxswing:${rxSwingVersion}"
+    implementation "net.jcip:jcip-annotations:${jcipVersion}"
+    implementation "com.google.code.findbugs:jsr305:${jsr305Version}"
+    implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
+    implementation "org.swinglabs.swingx:swingx-all:${swingXVersion}"
+
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation("org.spockframework:spock-core:${spockVersion}") {
+        exclude group: 'org.codehaus.groovy'
+    }
+    testImplementation("cglib:cglib:${cglibVersion}")  // spock mocks
+    testImplementation "com.jayway.awaitility:awaitility:${awaitilityVersion}"
+}
+
+sourceSets.main.java.srcDirs = ['src/main/java']
+sourceSets.test.java.srcDirs = []
+sourceSets.main.groovy.srcDirs = []
+sourceSets.test.groovy.srcDirs = ['src/test/groovy']
+
+test {
+    systemProperty 'file.encoding', fileEncoding
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = fileEncoding
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+}
+
+// http://forums.gradle.org/gradle/topics/set_maxparallelforks_to_number_of_cores_on_the_current_machine
+tasks.withType(Test) {
+    maxParallelForks = Runtime.getRuntime().availableProcessors()
+}
+
+// Set the default example number to 1 unless the user overrides, e.g. ./gradlew run -Pexample=7a
+ext.example = project.hasProperty("example") ? project.getProperty("example") : '1'
+run {
+    mainClassName = "ch.petikoch.examples.mvvm_rxjava.example${example}.Example_${example}_Main"
+}
